@@ -1,0 +1,38 @@
+{
+  "name": "kiasujobs",
+  "private": true,
+  "version": "0.1.0",
+  "description": "KiasuJobs — swipe-to-apply job hunting. Expo mobile app + Next.js landing page + Supabase backend.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "mobile": "npm run start --workspace @kiasujobs/mobile",
+    "mobile:android": "npm run android --workspace @kiasujobs/mobile",
+    "mobile:ios": "npm run ios --workspace @kiasujobs/mobile",
+    "mobile:fix": "npm run fix:deps --workspace @kiasujobs/mobile",
+    "web": "npm run dev --workspace @kiasujobs/web",
+    "web:build": "npm run build --workspace @kiasujobs/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:types": "supabase gen types typescript --local > packages/shared/src/database.generated.ts"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 100,
+    "trailingComma": "all"
+  }
+}
