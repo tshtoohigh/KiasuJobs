@@ -24,24 +24,26 @@ Landing page (Next.js) ──"get the app"──▶ Mobile app (Expo)
 
 ## ⚠️ Read this first: dependency versions
 
-This project was written in an environment **without access to the npm registry**, so no install
-was ever run against it. Package versions in `package.json` are pinned to the best-known versions
-for Expo SDK 57, but some may be slightly off.
+This project was written without access to the npm registry, so no install was ever run against it.
+Rather than guess exact versions and have `npm install` fail on one that doesn't exist, only `expo`
+is pinned in `apps/mobile/package.json` — every other Expo/React Native package is left open.
 
-**If `npm install` fails on a version that doesn't exist**, this is expected and takes one command
-to fix:
+That means the install is a **two-step process**, and step two is not optional:
 
 ```bash
-cd apps/mobile
-npx expo install --fix    # rewrites every expo/RN package to the exact SDK-correct version
+npm install --legacy-peer-deps   # never fails on a bad version
+cd apps/mobile && npm run setup  # expo install --fix → pins everything to SDK 57
 ```
 
-`expo install --fix` is authoritative — it reads the versions Expo actually ships for your SDK.
-Run it once after the first install and the lockfile will be correct from then on.
+`expo install --fix` is authoritative: it reads the versions Expo actually ships for your SDK and
+rewrites `package.json` accordingly. After running it once, your lockfile is correct from then on.
 
-Everything else — application code, SQL, RLS policies — has been verified: all 58 TypeScript files
-pass a syntax check, `packages/shared` type-checks cleanly with `strict: true`, and the whole repo
-is Prettier-clean.
+`--legacy-peer-deps` is needed because the Expo SDK 57 dependency tree has known internal peer
+conflicts that strict npm resolution rejects.
+
+Everything else — application code, SQL, RLS policies — has been verified: all TypeScript passes a
+syntax check, `packages/shared` type-checks cleanly under `strict`, every imported package is
+declared, and the repo is Prettier-clean.
 
 ---
 
@@ -61,7 +63,7 @@ is Prettier-clean.
 From the repo root:
 
 ```bash
-npm install
+npm install --legacy-peer-deps
 npm run db:start     # supabase start — first run pulls Docker images, be patient
 npm run db:reset     # applies migrations + seed data
 ```
@@ -82,6 +84,7 @@ Useful local URLs:
 
 ```bash
 cd apps/mobile
+npm run setup        # expo install --fix — pins deps to SDK 57. Required once.
 cp .env.example .env
 ```
 
