@@ -90,6 +90,27 @@ values
   )
 on conflict (id) do nothing;
 
+-- GoTrue (Supabase Auth) reads several token columns as non-nullable strings.
+-- A hand-inserted auth.users row leaves them NULL, and sign-in then fails with
+-- "Database error querying schema" — which looks nothing like the real cause.
+-- Normalising them to '' is what makes password login work on a seeded user.
+update auth.users
+set confirmation_token = '',
+    recovery_token = '',
+    email_change = '',
+    email_change_token_new = '',
+    email_change_token_current = '',
+    phone_change = '',
+    phone_change_token = '',
+    reauthentication_token = '',
+    email_confirmed_at = coalesce(email_confirmed_at, now())
+where email in (
+  'seeker@kiasujobs.test',
+  'hiring@kopitech.test',
+  'hiring@merliondigital.test',
+  'hiring@sembawangsys.test'
+);
+
 -- Email/password sign-in needs a matching identity row.
 insert into auth.identities (
   id,
