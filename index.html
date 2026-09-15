@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+
+    <!-- PWA Meta -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#070A11" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KiasuJobs" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg" />
+
+    <title>KiasuJobs — Swipe right to apply</title>
+    <meta
+      name="description"
+      content="Swipe-to-apply job hunting. One role per card, your resume already attached."
+    />
+
+    <style>
+      /* Prevent overscroll bounce on iOS */
+      html,
+      body {
+        overscroll-behavior: none;
+      }
+      /* Safe area padding for notched phones */
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      /* The deck drags horizontally, so never let the browser hijack it */
+      .swipe-surface {
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body class="bg-bg text-white antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then(() => console.log('SW registered'))
+            .catch((err) => console.log('SW registration failed:', err));
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,38 +1,36 @@
 {
   "name": "kiasujobs",
   "private": true,
-  "version": "0.1.0",
-  "description": "KiasuJobs — swipe-to-apply job hunting. Expo mobile app + Next.js landing page + Supabase backend.",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "engines": {
-    "node": ">=22"
-  },
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "mobile": "npm run start --workspace @kiasujobs/mobile",
-    "mobile:android": "npm run android --workspace @kiasujobs/mobile",
-    "mobile:ios": "npm run ios --workspace @kiasujobs/mobile",
-    "mobile:fix": "npm run fix:deps --workspace @kiasujobs/mobile",
-    "web": "npm run dev --workspace @kiasujobs/web",
-    "web:build": "npm run build --workspace @kiasujobs/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "db:start": "supabase start",
-    "db:reset": "supabase db reset",
-    "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --local > packages/shared/src/database.generated.ts"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.1",
+    "lucide-react": "^0.378.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.3.0",
+    "zustand": "^4.5.2",
+    "@supabase/supabase-js": "^2.43.4",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/android": "^6.1.0"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
-  },
-  "prettier": {
-    "semi": true,
-    "singleQuote": true,
-    "printWidth": 100,
-    "trailingComma": "all"
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/assets": "^3.0.5",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
   }
 }
