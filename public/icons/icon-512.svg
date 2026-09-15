@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#070A11" />
+  <!-- Back card, tilted: the "deck" -->
+  <rect x="138" y="117" width="235" height="278" rx="37" fill="#232E43" transform="rotate(-10 256 256)" />
+  <!-- Front card -->
+  <rect
+    x="149"
+    y="128"
+    width="214"
+    height="256"
+    rx="37"
+    fill="#161E2E"
+    stroke="#22F0FF"
+    stroke-width="8"
+  />
+  <!-- Right-swipe tick -->
+  <path
+    d="M203 261l35 35 69-80"
+    fill="none"
+    stroke="#22E88A"
+    stroke-width="24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

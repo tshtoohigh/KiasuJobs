@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+
+/*
+ * Tailwind v4 is configured in CSS, not a JS config file. These custom
+ * properties become utilities automatically: `--color-brand-500` gives you
+ * `bg-brand-500`, `text-brand-500`, and so on.
+ */
+@theme {
+  --color-brand-50: #eeedfd;
+  --color-brand-100: #dcdafb;
+  --color-brand-400: #7c74ee;
+  --color-brand-500: #4e46e5;
+  --color-brand-600: #3b34c4;
+  --color-brand-700: #2f2a9c;
+
+  --color-ink-500: #5c6178;
+  --color-ink-700: #2b2f3d;
+  --color-ink-900: #12141c;
+
+  --color-apply-500: #12a150;
+  --color-skip-500: #e5484d;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--color-ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Respect users who'd rather not watch things move. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
