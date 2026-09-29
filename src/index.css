@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    /* Deck drags shouldn't select the card text. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Keep focus rings for keyboard users, hide them for mouse clicks. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
