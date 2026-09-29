@@ -29,12 +29,14 @@ You'll see a setup screen until you connect a database. That's the next step.
 
 1. Create a free project at [supabase.com/dashboard](https://supabase.com/dashboard).
 2. Open **SQL Editor → New query**, paste all of `supabase/schema.sql`, click **Run**.
-3. Same again with `supabase/seed.sql` — this creates 3 demo employers, 12 live jobs and a test
-   seeker, so the deck isn't empty.
-4. Go to **Settings → API** and copy:
+3. New query → paste `supabase/upgrade-v2.sql` → **Run**. This adds real-job ingestion support,
+   the resume AI fields, and match scoring.
+4. New query → paste `supabase/seed.sql` → **Run**. Creates 3 demo employers, 12 live jobs and a
+   test seeker, so the deck isn't empty.
+5. Go to **Settings → API** and copy:
    - **Project URL**
    - **anon public** key
-5. Paste both into the top of `src/lib/supabase.ts`, replacing the placeholders.
+6. Paste both into the top of `src/lib/supabase.ts`, replacing the placeholders.
 
 Save the file. Vite hot-reloads and the setup screen disappears.
 
@@ -61,6 +63,70 @@ Or create your own account — the sign-up form asks which role you want.
 > **Authentication → Providers → Email**, or click the link in the email it sends.
 
 ---
+
+## Real job openings
+
+Jobs come from two places: **employers posting inside the app**, and **an ingestion function
+pulling live listings from public job APIs**.
+
+| Source    | Key needed  | What it gives you            |
+| --------- | ----------- | ---------------------------- |
+| Remotive  | none        | Remote tech roles            |
+| Arbeitnow | none        | Global, incl. visa-sponsored |
+| Jobicy    | none        | Remote, region-filtered      |
+| Adzuna    | free signup | **Real Singapore listings**  |
+
+Deploy it and schedule it — full steps in **[supabase/DEPLOY.md](./supabase/DEPLOY.md)**:
+
+```bash
+supabase functions deploy ingest-jobs --no-verify-jwt
+supabase secrets set INGEST_SECRET=$(openssl rand -hex 24)
+```
+
+Then run `supabase/cron.sql` (after putting your secret in it) and new jobs land every 6 hours with
+nothing for you to do.
+
+> **Why not LinkedIn or Indeed?** Both forbid scraping in their terms, actively block it, and
+> Indeed shut down its public API. A scraper would break within days and expose you to legal risk.
+> The four sources above publish APIs meant for exactly this.
+
+Ingested jobs have no employer account, so they behave slightly differently: the card is labelled
+**via Remotive** (etc.), and swiping right saves it to your tracker plus surfaces the original link,
+because there's no in-app employer to receive an application. The details modal's primary action is
+**Apply on site**. Listings unseen for 45 days close automatically.
+
+## Resume AI
+
+Upload a resume and the app reads it to rank your deck.
+
+1. PDF text is extracted **in the browser** with pdf.js — the file itself never goes to the AI
+2. That text goes to the `parse-resume` Edge Function, which extracts skills, titles and keywords
+3. Keywords are stored on your profile, and `get_job_feed` ranks jobs by how many they hit
+
+Cards then show a **84% match** badge and the specific terms that matched, so the ranking is
+explainable rather than a black box.
+
+**It works with no AI key.** Without `OPENROUTER_API_KEY` the function falls back to dictionary
+matching over ~200 skills — less nuanced, but free, instant, and enough to rank a feed. Add an
+[OpenRouter](https://openrouter.ai) key (free models available, same provider RS Finance uses) for
+better extraction:
+
+```bash
+supabase functions deploy parse-resume
+supabase secrets set OPENROUTER_API_KEY=sk-or-v1-...
+```
+
+Scanned or image-only PDFs can't be read — the UI detects that and offers a paste-the-text box
+instead of failing silently.
+
+## Google sign-in
+
+The code is already wired up (PKCE flow). You just need to enable the provider — see
+**[supabase/DEPLOY.md → Google sign-in](./supabase/DEPLOY.md#google-sign-in)** for the exact
+redirect URI and dashboard steps.
+
+Google accounts arrive without a role, so they land on the role-selection screen first. That's
+deliberate: defaulting them to "job seeker" would silently mis-file anyone signing up to hire.
 
 ## Try the end-to-end slice
 

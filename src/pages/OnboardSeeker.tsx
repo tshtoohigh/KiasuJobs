@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { ResumePanel } from "@/components/ResumePanel";
 import {
   Button,
   Chip,
@@ -10,9 +11,8 @@ import {
 } from "@/components/ui";
 import { describeSupabaseError } from "@/lib/supabase";
 import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/types";
-import type { JobType } from "@/lib/types";
-import { setSeekerResume, upsertSeekerProfile } from "@/services/profiles";
-import { uploadResume } from "@/services/storage";
+import type { JobType, SeekerProfile } from "@/lib/types";
+import { fetchSeekerProfile, upsertSeekerProfile } from "@/services/profiles";
 import { useAuth } from "@/stores/useAuth";
 
 const INDUSTRY_OPTIONS = [
@@ -38,8 +38,7 @@ export function OnboardSeeker() {
   const finishOnboarding = useAuth((state) => state.finishOnboarding);
   const signOut = useAuth((state) => state.signOut);
 
-  const fileInput = useRef<HTMLInputElement | null>(null);
-
+  const [profile, setProfile] = useState<SeekerProfile | null>(null);
   const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
@@ -48,33 +47,31 @@ export function OnboardSeeker() {
   const [locations, setLocations] = useState("");
   const [industries, setIndustries] = useState<string[]>([]);
 
-  const [resume, setResume] = useState<{
-    path: string;
-    filename: string;
-  } | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The resume panel writes straight to seeker_profiles, so this screen reads
+  // it back to show what the parser found.
+  const loadProfile = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const row = await fetchSeekerProfile(userId);
+      setProfile(row);
+      // Pre-fill the headline from the AI summary if the user hasn't typed one.
+      setHeadline((current) => current || (row?.ai_titles?.[0] ?? ""));
+    } catch {
+      // Non-fatal: onboarding still works without it.
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
 
   const toggle = <T,>(list: T[], value: T): T[] =>
     list.includes(value)
       ? list.filter((entry) => entry !== value)
       : [...list, value];
-
-  const onPickFile = async (file: File | undefined) => {
-    if (!file || !userId) return;
-    setError(null);
-    setUploading(true);
-    try {
-      const uploaded = await uploadResume(userId, file);
-      await setSeekerResume(userId, uploaded.path, uploaded.filename);
-      setResume(uploaded);
-    } catch (caught) {
-      setError(describeSupabaseError(caught, "Could not upload that file."));
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const submit = async () => {
     if (!userId) return;
@@ -106,43 +103,28 @@ export function OnboardSeeker() {
         Set up your profile
       </h1>
       <p className="mt-2 leading-relaxed text-muted">
-        This is what employers see when you swipe right. Preferences shape your
-        deck — leave one blank to mean "anything".
+        Upload your resume and we&apos;ll read it to rank jobs for you.
+        Preferences narrow the deck further — leave one blank to mean
+        &ldquo;anything&rdquo;.
       </p>
 
+      {error ? (
+        <div className="mt-5">
+          <ErrorNotice message={error} />
+        </div>
+      ) : null}
+
       <div className="mt-6">
-        {error ? <ErrorNotice message={error} /> : null}
+        {userId ? (
+          <ResumePanel
+            userId={userId}
+            profile={profile}
+            onChanged={loadProfile}
+          />
+        ) : null}
       </div>
 
-      <section className="mb-6">
-        <SectionTitle>Resume</SectionTitle>
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="truncate font-semibold text-white">
-            {resume ? resume.filename : "No file chosen yet"}
-          </p>
-          <p className="mb-3 mt-1 text-xs leading-relaxed text-muted-dark">
-            {resume
-              ? "Attached to every application you send."
-              : "PDF or Word, up to 5 MB. You can add it later from your profile."}
-          </p>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".pdf,.doc,.docx,application/pdf"
-            className="hidden"
-            onChange={(event) => void onPickFile(event.target.files?.[0])}
-          />
-          <Button
-            variant="secondary"
-            onClick={() => fileInput.current?.click()}
-            loading={uploading}
-          >
-            {resume ? "Replace file" : "Choose file"}
-          </Button>
-        </div>
-      </section>
-
-      <section className="mb-6">
+      <section className="mt-6">
         <SectionTitle>About you</SectionTitle>
         <Field
           label="Headline"
@@ -167,7 +149,7 @@ export function OnboardSeeker() {
       </section>
 
       <section className="mb-6">
-        <SectionTitle>What you're looking for</SectionTitle>
+        <SectionTitle>What you&apos;re looking for</SectionTitle>
 
         <p className="mb-2 text-[13px] font-semibold text-white">Work style</p>
         <div className="mb-4 flex flex-wrap gap-2">

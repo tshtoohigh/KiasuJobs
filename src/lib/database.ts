@@ -100,6 +100,10 @@ export interface Database {
         Args: { p_job_id: string; p_cover_note?: string | null };
         Returns: Application;
       };
+      close_stale_external_jobs: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
     };
     Enums: {
       user_role: UserRole;

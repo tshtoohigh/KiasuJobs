@@ -110,7 +110,18 @@ export const useJobQueue = create<JobQueueState>((set, get) => ({
         direction === "right" ? state.appliedCount + 1 : state.appliedCount,
     }));
 
-    if (direction === "right") showToast(`Applied to ${card.title}`, "success");
+    if (direction === "right") {
+      // An ingested job has no employer account to receive an application, so
+      // the swipe saves it and the seeker finishes on the company's own site.
+      // Opening a tab here would be blocked anyway — this runs after the
+      // fly-out animation, outside the user-gesture window.
+      showToast(
+        card.is_external
+          ? `Saved ${card.title} — open the listing from My Applications`
+          : `Applied to ${card.title}`,
+        "success",
+      );
+    }
 
     const rollback = () =>
       set((state) => ({

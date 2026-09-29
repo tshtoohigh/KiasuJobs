@@ -40,6 +40,18 @@ export interface SeekerProfile {
   preferred_job_types: JobType[];
   preferred_locations: string[];
   industries: string[];
+
+  // --- Extracted from the resume by the parse-resume function -------------
+  /** Plain text pulled out of the uploaded file, kept so we can re-parse. */
+  resume_text: string | null;
+  /** Lowercased terms that drive match scoring in `get_job_feed`. */
+  ai_keywords: string[];
+  ai_skills: string[];
+  ai_titles: string[];
+  ai_seniority: string | null;
+  ai_summary: string | null;
+  ai_parsed_at: string | null;
+
   created_at: string;
   updated_at: string;
 }
@@ -59,7 +71,8 @@ export interface EmployerProfile {
 
 export interface JobPosting {
   id: string;
-  employer_id: string;
+  /** Null for ingested jobs — nobody in the app owns them. */
+  employer_id: string | null;
   title: string;
   description: string;
   requirements: string[];
@@ -72,6 +85,16 @@ export interface JobPosting {
   industry: string | null;
   status: JobStatus;
   published_at: string | null;
+
+  /** `employer` for in-app postings, else the provider id (remotive, adzuna…). */
+  source: string;
+  external_id: string | null;
+  /** Where to apply for an ingested job. */
+  external_url: string | null;
+  /** Ingested jobs carry their company details directly. */
+  company_name: string | null;
+  company_logo_url: string | null;
+
   created_at: string;
   updated_at: string;
 }
@@ -111,7 +134,7 @@ export interface JobSwipe {
  */
 export interface JobFeedItem {
   id: string;
-  employer_id: string;
+  employer_id: string | null;
   title: string;
   description: string;
   requirements: string[];
@@ -124,8 +147,20 @@ export interface JobFeedItem {
   industry: string | null;
   published_at: string | null;
   company_name: string;
+  /** Storage path, for logos uploaded by an employer. */
   company_logo_path: string | null;
+  /** Absolute URL, for logos supplied by a job provider. */
+  company_logo_url: string | null;
   company_industry: string | null;
+
+  source: string;
+  external_url: string | null;
+  /** True when the job came from a provider and has no employer account. */
+  is_external: boolean;
+  /** 0–99, or null when the seeker has no parsed resume to match against. */
+  match_score: number | null;
+  /** The resume keywords this job actually hit — shown on the card. */
+  matched_keywords: string[];
 }
 
 /**
@@ -143,6 +178,10 @@ export interface SeekerApplicationDetail extends Application {
   job_status: JobStatus;
   company_name: string | null;
   company_logo_path: string | null;
+  company_logo_url: string | null;
+  source: string;
+  external_url: string | null;
+  is_external: boolean;
 }
 
 /**
@@ -199,6 +238,17 @@ export interface EmployerProfileInput {
   industry: string | null;
   description: string | null;
   company_size: string | null;
+}
+
+/** What the `parse-resume` Edge Function returns. */
+export interface ResumeInsights {
+  skills: string[];
+  titles: string[];
+  keywords: string[];
+  seniority: string | null;
+  summary: string | null;
+  /** `ai` when a model ran, `heuristic` when dictionary matching was used. */
+  mode: "ai" | "heuristic";
 }
 
 export const STORAGE_BUCKETS = {

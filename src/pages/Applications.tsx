@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { Page } from "@/components/layout/AppShell";
@@ -85,15 +86,15 @@ function ApplicationRow({
   application: SeekerApplicationDetail;
 }) {
   const company = application.company_name ?? "Unknown company";
+  // Employer logos are storage paths; provider logos are already URLs.
+  const logo =
+    application.company_logo_url ??
+    companyLogoUrl(application.company_logo_path);
 
   return (
     <article className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start gap-3">
-        <CompanyLogo
-          name={company}
-          url={companyLogoUrl(application.company_logo_path)}
-          size={44}
-        />
+        <CompanyLogo name={company} url={logo} size={44} />
         <div className="min-w-0 flex-1">
           <h3 className="font-bold leading-snug text-white">
             {application.job_title}
@@ -112,6 +113,20 @@ function ApplicationRow({
         {" · "}
         Applied {formatRelativeTime(application.created_at)}
       </p>
+
+      {application.is_external && application.external_url ? (
+        // Ingested jobs are completed on the company's own site, so the tracker
+        // has to keep the link — this is the only way back to it.
+        <a
+          href={application.external_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline"
+        >
+          Open the listing
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      ) : null}
 
       <ProgressTrail application={application} />
     </article>

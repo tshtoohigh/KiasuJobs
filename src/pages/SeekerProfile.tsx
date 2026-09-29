@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { LogOut } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Page } from "@/components/layout/AppShell";
+import { ResumePanel } from "@/components/ResumePanel";
 import {
   Button,
   Card,
@@ -14,12 +16,7 @@ import {
 import { describeSupabaseError } from "@/lib/supabase";
 import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/types";
 import type { JobType, SeekerProfile as SeekerProfileRow } from "@/lib/types";
-import {
-  fetchSeekerProfile,
-  setSeekerResume,
-  upsertSeekerProfile,
-} from "@/services/profiles";
-import { uploadResume } from "@/services/storage";
+import { fetchSeekerProfile, upsertSeekerProfile } from "@/services/profiles";
 import { useAuth } from "@/stores/useAuth";
 import { useJobQueue } from "@/stores/useJobQueue";
 import { showToast } from "@/stores/useToast";
@@ -30,12 +27,9 @@ export function SeekerProfile() {
   const signOut = useAuth((state) => state.signOut);
   const reloadDeck = useJobQueue((state) => state.initialise);
 
-  const fileInput = useRef<HTMLInputElement | null>(null);
-
   const [profile, setProfile] = useState<SeekerProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [headline, setHeadline] = useState("");
@@ -62,6 +56,12 @@ export function SeekerProfile() {
     void load();
   }, [load]);
 
+  /** Resume analysis changes ranking, so the deck has to be rebuilt too. */
+  const onResumeChanged = useCallback(async () => {
+    await load();
+    await reloadDeck(true);
+  }, [load, reloadDeck]);
+
   const save = async () => {
     if (!userId) return;
     setSaving(true);
@@ -87,22 +87,6 @@ export function SeekerProfile() {
     }
   };
 
-  const onPickFile = async (file: File | undefined) => {
-    if (!file || !userId) return;
-    setError(null);
-    setUploading(true);
-    try {
-      const uploaded = await uploadResume(userId, file);
-      await setSeekerResume(userId, uploaded.path, uploaded.filename);
-      await load();
-      showToast("Resume updated.", "success");
-    } catch (caught) {
-      setError(describeSupabaseError(caught, "Could not upload that file."));
-    } finally {
-      setUploading(false);
-    }
-  };
-
   if (loading) return <Spinner />;
 
   return (
@@ -114,31 +98,15 @@ export function SeekerProfile() {
 
       {error ? <ErrorNotice message={error} /> : null}
 
-      <Card className="mb-4">
-        <SectionTitle>Resume</SectionTitle>
-        <p className="truncate font-semibold text-white">
-          {profile?.resume_filename ?? "No resume uploaded"}
-        </p>
-        <p className="mb-3 mt-1 text-xs leading-relaxed text-muted-dark">
-          {profile?.resume_path
-            ? "Sent with every application. Replacing it only affects future applications."
-            : "Employers see far more value in an application with a resume attached."}
-        </p>
-        <input
-          ref={fileInput}
-          type="file"
-          accept=".pdf,.doc,.docx,application/pdf"
-          className="hidden"
-          onChange={(event) => void onPickFile(event.target.files?.[0])}
-        />
-        <Button
-          variant="secondary"
-          onClick={() => fileInput.current?.click()}
-          loading={uploading}
-        >
-          {profile?.resume_path ? "Replace resume" : "Upload resume"}
-        </Button>
-      </Card>
+      {userId ? (
+        <div className="mb-4">
+          <ResumePanel
+            userId={userId}
+            profile={profile}
+            onChanged={onResumeChanged}
+          />
+        </div>
+      ) : null}
 
       <Card className="mb-4">
         <SectionTitle>Deck preferences</SectionTitle>
@@ -184,6 +152,7 @@ export function SeekerProfile() {
       </Card>
 
       <Button variant="ghost" onClick={() => void signOut()} full>
+        <LogOut className="h-4 w-4" />
         Sign out
       </Button>
     </Page>
